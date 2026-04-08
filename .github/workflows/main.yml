@@ -1,0 +1,31 @@
+name: Build Mod Cam Xa
+
+# Cho phép hiện nút "Run workflow" để bấm thủ công
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Lấy Code Về
+        uses: actions/checkout@v3
+
+      - name: Cài đặt môi trường Java (JDK 17)
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cấp quyền chạy cho Gradle
+        run: chmod +x ./gradlew
+
+      - name: Tiến hành Build Mod
+        run: ./gradlew assembleRelease
+
+      - name: Lấy File .SO và APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: Thu-Vien-Mod-ChanelTeam
+          path: app/build/outputs/
