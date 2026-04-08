@@ -1,6 +1,5 @@
 name: Build Mod Cam Xa
 
-# Cho phép hiện nút "Run workflow" để bấm thủ công
 on:
   workflow_dispatch:
 
@@ -17,6 +16,9 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      - name: Chấp nhận điều khoản SDK để tải NDK
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
       - name: Cấp quyền chạy cho Gradle
         run: chmod +x ./gradlew
