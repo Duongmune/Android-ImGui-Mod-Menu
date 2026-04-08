@@ -17,16 +17,20 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Ép Github cài đúng bản NDK 25.1.8937393
+      - name: Cài NDK và Ép Gradle nhận diện
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;25.1.8937393"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;25.1.8937393"
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "ndk.dir=$ANDROID_HOME/ndk/25.1.8937393" >> local.properties
 
       - name: Cấp quyền chạy cho Gradle
         run: chmod +x ./gradlew
 
       - name: Tiến hành Build Mod
         run: ./gradlew assembleRelease
+        env:
+          ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/25.1.8937393
 
       - name: Lấy File .SO và APK
         uses: actions/upload-artifact@v4
