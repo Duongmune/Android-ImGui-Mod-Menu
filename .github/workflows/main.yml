@@ -17,12 +17,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Cài NDK và Ép Gradle nhận diện
+      - name: Ép Source Code dùng NDK 25 có sẵn
         run: |
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;24.0.7856742"
+          find . -type f -name "build.gradle" -exec sed -i 's/24.0.7856742/25.1.8937393/g' {} +
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          echo "ndk.dir=$ANDROID_HOME/ndk/24.0.7856742" >> local.properties
+          echo "ndk.dir=$ANDROID_HOME/ndk/25.1.8937393" >> local.properties
 
       - name: Cấp quyền chạy cho Gradle
         run: chmod +x ./gradlew
@@ -30,7 +29,7 @@ jobs:
       - name: Tiến hành Build Mod
         run: ./gradlew assembleRelease
         env:
-          ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/24.0.7856742
+          ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/25.1.8937393
 
       - name: Lấy File .SO và APK
         uses: actions/upload-artifact@v4
