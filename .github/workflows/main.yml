@@ -17,8 +17,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Chấp nhận điều khoản SDK để tải NDK
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+      - name: Ép Github cài đúng bản NDK 25.1.8937393
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;25.1.8937393"
 
       - name: Cấp quyền chạy cho Gradle
         run: chmod +x ./gradlew
