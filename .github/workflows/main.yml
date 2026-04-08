@@ -17,9 +17,14 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Ép Source Code dùng NDK 25 có sẵn
+      - name: Hack file build.gradle sang NDK 25
         run: |
           find . -type f -name "build.gradle" -exec sed -i 's/24.0.7856742/25.1.8937393/g' {} +
+
+      - name: Tải và Cài NDK 25.1.8937393
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;25.1.8937393"
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           echo "ndk.dir=$ANDROID_HOME/ndk/25.1.8937393" >> local.properties
 
