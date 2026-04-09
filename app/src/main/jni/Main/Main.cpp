@@ -51,20 +51,28 @@ void DrawMenu() {
 void *thread(void *) {
     LOGI(OBFUSCATE("Main Thread Loaded: %d"), gettid());
 
-    // ĐỢI GAME LOAD XONG THƯ VIỆN (Tránh văng game)
+    // 1. CHỜ GAME LOAD VÀO RAM
     do {
         sleep(1);
     } while (getAbsoluteAddress("libil2cpp.so", 0) == 0);
 
-    // Khởi tạo Menu ImGui
+    // ============================================================
+    // 2. NGỦ ĐÔNG 15 GIÂY (TUYỆT CHIÊU QUA MẶT ANTI-CHEAT)
+    // Chờ Garena giải mã xong hoàn toàn libil2cpp.so mới được hành động
+    // ============================================================
+    sleep(15);
+
+    // 3. Khởi tạo Menu ImGui (Sau khi đồ họa đã load mượt)
     initModMenu((void *)DrawMenu);
 
     // ================= TIẾN HÀNH HOOK BỘ NHỚ ====================
-    // Lấy địa chỉ gốc của thư viện
+    // Lấy địa chỉ gốc của thư viện (Lúc này đã giải mã sạch sẽ)
     uintptr_t il2cppBase = getAbsoluteAddress("libil2cpp.so", 0);
     
-    // Ép DobbyHook vào cái offset 0x8D546F4 mà tui tìm cho bro
-    DobbyHook((void*)(il2cppBase + 0x8D546F4), (void*)hook_GetCameraHeightRateValue, (void**)&old_GetCameraHeightRateValue);
+    // Móc DobbyHook an toàn
+    if (il2cppBase != 0) {
+        DobbyHook((void*)(il2cppBase + 0x8D546F4), (void*)hook_GetCameraHeightRateValue, (void**)&old_GetCameraHeightRateValue);
+    }
     // ==============================================================
 
     LOGI("Main thread done");
@@ -95,6 +103,8 @@ void init() {
     pthread_t t;
     pthread_create(&t, nullptr, thread, nullptr);
 
-    //Don't leave any traces, remap the loader lib as well
-    RemapTools::RemapLibrary("libLoader.so");
+    // ============================================================
+    // ĐÃ TẮT REMAP: Để Android 15 không phát hiện và bóp cổ văng game
+    // ============================================================
+    // RemapTools::RemapLibrary("libLoader.so");
 }
