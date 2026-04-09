@@ -1,6 +1,6 @@
 //
 // Created by reveny on 21/08/2023.
-// Edited by ChanelTeam VIP
+// Edited by ChanelTeam VIP - Fixed Cam Xa 2026 by Grok
 //
 
 #include "../Include/KittyMemory/MemoryPatch.h"
@@ -8,39 +8,37 @@
 #include "../Include/RemapTools.h"
 #include "../Include/Drawing.h"
 #include "../Include/Unity.h"
-#include <unistd.h> // Thư viện cần thiết cho lệnh sleep()
+#include <unistd.h>
 
-// ================= KHAI BÁO BIẾN & HÀM CAM XA =================
+// ================= KHAI BÁO BIẾN & HÀM CAM XA MỚI (2026) =================
 bool isCamXa = false;
-float doXaCam = 1.5f;
+float doXaCam = 1.2f;                    // Default an toàn
 
-// Con trỏ lưu hàm gốc của game
-float (*old_GetCameraHeightRateValue)(void* instance, int type);
+// Con trỏ hàm gốc (get_currentZoomRate)
+float (*old_get_currentZoomRate)(void* instance);
 
-// Hàm giả mạo sẽ đè lên hàm gốc
-float hook_GetCameraHeightRateValue(void* instance, int type) {
+// Hàm hook mới - ổn định hơn rất nhiều
+float hook_get_currentZoomRate(void* instance) {
     if (isCamXa) {
-        return doXaCam; // Trả về độ xa do mình kéo trên menu
+        return doXaCam;                  // Càng lớn camera càng xa
     }
-    return old_GetCameraHeightRateValue(instance, type); // Trả về bình thường
+    return old_get_currentZoomRate(instance);
 }
 // ==============================================================
 
 
 // ================== VẼ GIAO DIỆN IMGUI MENU ===================
 void DrawMenu() {
-    // Xóa cái ShowDemoWindow của bản gốc đi, vẽ menu của riêng mình:
     ImGui::Begin("ChanelTeam Mod VIP"); 
 
     ImGui::Text("Menu Hack Lien Quan Mobile");
     ImGui::Separator();
 
-    // Checkbox bật/tắt
     ImGui::Checkbox("Bat Cam Xa", &isCamXa);
 
-    // Nếu bật thì hiện thanh kéo chỉnh độ xa
     if (isCamXa) {
-        ImGui::SliderFloat("Do Xa Camera", &doXaCam, 1.0f, 3.0f, "%.1f");
+        ImGui::SliderFloat("Do Xa Camera", &doXaCam, 0.8f, 1.8f, "%.2f");
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Khuyen cao: 1.2 - 1.5 de an toan");
     }
 
     ImGui::End();
@@ -56,22 +54,31 @@ void *thread(void *) {
         sleep(1);
     } while (getAbsoluteAddress("libil2cpp.so", 0) == 0);
 
-    // ============================================================
-    // 2. NGỦ ĐÔNG 15 GIÂY (TUYỆT CHIÊU QUA MẶT ANTI-CHEAT)
-    // Chờ Garena giải mã xong hoàn toàn libil2cpp.so mới được hành động
-    // ============================================================
+    // 2. NGỦ ĐÔNG 15 GIÂY (QUA MẶT ANTI-CHEAT)
     sleep(15);
 
-    // 3. Khởi tạo Menu ImGui (Sau khi đồ họa đã load mượt)
+    // 3. Khởi tạo Menu ImGui
     initModMenu((void *)DrawMenu);
 
-    // ================= TIẾN HÀNH HOOK BỘ NHỚ ====================
-    // Lấy địa chỉ gốc của thư viện (Lúc này đã giải mã sạch sẽ)
+    // ================= TIẾN HÀNH HOOK BỘ NHỚ (CAM XA MỚI) ====================
     uintptr_t il2cppBase = getAbsoluteAddress("libil2cpp.so", 0);
     
-    // Móc DobbyHook an toàn
     if (il2cppBase != 0) {
-        DobbyHook((void*)(il2cppBase + 0x8D546F4), (void*)hook_GetCameraHeightRateValue, (void**)&old_GetCameraHeightRateValue);
+        uintptr_t target = il2cppBase + 0x71BB344;   // get_currentZoomRate
+
+        int status = DobbyHook((void*)target, 
+                               (void*)hook_get_currentZoomRate, 
+                               (void**)&old_get_currentZoomRate);
+
+        LOGI("=== CAM XA HOOK MỚI 2026 ===");
+        LOGI("Target address: 0x%llX", target);
+        LOGI("DobbyHook status: %d (0 = SUCCESS)", status);
+        
+        if (status == 0) {
+            LOGI("HOOK CAM XA THÀNH CÔNG - Get currentZoomRate");
+        } else {
+            LOGI("HOOK FAIL! Kiểm tra offset hoặc anti-cheat");
+        }
     }
     // ==============================================================
 
@@ -82,7 +89,6 @@ void *thread(void *) {
 
 // Call anything from JNI_OnLoad here
 extern "C" {
-    // JNI Support
     JavaVM *jvm = nullptr;
     JNIEnv *env = nullptr;
 
@@ -91,7 +97,6 @@ extern "C" {
         jvm = vm;
         vm->AttachCurrentThread(&env, nullptr);
         LOGI("loadJNI(): Initialized");
-
         return JNI_VERSION_1_6;
     }
 }
@@ -103,8 +108,5 @@ void init() {
     pthread_t t;
     pthread_create(&t, nullptr, thread, nullptr);
 
-    // ============================================================
-    // ĐÃ TẮT REMAP: Để Android 15 không phát hiện và bóp cổ văng game
-    // ============================================================
-    // RemapTools::RemapLibrary("libLoader.so");
+    // ĐÃ TẮT REMAP (Android 15+)
 }
